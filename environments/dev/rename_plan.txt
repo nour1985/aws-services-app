@@ -1,0 +1,266 @@
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+  ~ update in-place
+-/+ destroy and then create replacement
+
+Terraform will perform the following actions:
+
+  # module.codebuild.aws_codebuild_project.this will be updated in-place
+  ~ resource "aws_codebuild_project" "this" {
+        id                     = "arn:aws:codebuild:us-east-1:216989128401:project/aws-service-liblib-backend-build"
+        name                   = "aws-service-liblib-backend-build"
+        tags                   = {}
+        # (14 unchanged attributes hidden)
+
+      ~ environment {
+            # (6 unchanged attributes hidden)
+
+          ~ environment_variable {
+                name  = "ECR_REPOSITORY_URL"
+              ~ value = "216989128401.dkr.ecr.us-east-1.amazonaws.com/aws-service-liblib-backend-dev" -> (known after apply)
+                # (1 unchanged attribute hidden)
+            }
+
+            # (3 unchanged blocks hidden)
+        }
+
+        # (4 unchanged blocks hidden)
+    }
+
+  # module.codebuild.aws_codebuild_webhook.this will be created
+  + resource "aws_codebuild_webhook" "this" {
+      + build_type   = "BUILD"
+      + id           = (known after apply)
+      + payload_url  = (known after apply)
+      + project_name = "aws-service-liblib-backend-build"
+      + secret       = (sensitive value)
+      + url          = (known after apply)
+
+      + filter_group {
+          + filter {
+              + exclude_matched_pattern = false
+              + pattern                 = "PUSH"
+              + type                    = "EVENT"
+            }
+          + filter {
+              + exclude_matched_pattern = false
+              + pattern                 = "master"
+              + type                    = "HEAD_REF"
+            }
+        }
+    }
+
+  # module.ecr.aws_ecr_repository.this must be replaced
+-/+ resource "aws_ecr_repository" "this" {
+      ~ arn                  = "arn:aws:ecr:us-east-1:216989128401:repository/aws-service-liblib-backend-dev" -> (known after apply)
+      ~ id                   = "aws-service-liblib-backend-dev" -> (known after apply)
+      ~ name                 = "aws-service-liblib-backend-dev" -> "aws-service-liblib-digital-hall-dev" # forces replacement
+      ~ registry_id          = "216989128401" -> (known after apply)
+      ~ repository_url       = "216989128401.dkr.ecr.us-east-1.amazonaws.com/aws-service-liblib-backend-dev" -> (known after apply)
+      - tags                 = {} -> null
+        # (2 unchanged attributes hidden)
+
+      - encryption_configuration {
+          - encryption_type = "AES256" -> null
+            # (1 unchanged attribute hidden)
+        }
+
+        # (1 unchanged block hidden)
+    }
+
+  # module.fargate.aws_ecs_service.this will be created
+  + resource "aws_ecs_service" "this" {
+      + availability_zone_rebalancing      = "DISABLED"
+      + cluster                            = "arn:aws:ecs:us-east-1:216989128401:cluster/aws-service-liblib-dev-cluster"
+      + deployment_maximum_percent         = 200
+      + deployment_minimum_healthy_percent = 100
+      + desired_count                      = 1
+      + enable_ecs_managed_tags            = false
+      + enable_execute_command             = false
+      + iam_role                           = (known after apply)
+      + id                                 = (known after apply)
+      + launch_type                        = "FARGATE"
+      + name                               = "aws-service-liblib-app-dev"
+      + platform_version                   = (known after apply)
+      + scheduling_strategy                = "REPLICA"
+      + tags_all                           = {
+          + "CostCenter"  = "App-Development"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+      + task_definition                    = "arn:aws:ecs:us-east-1:216989128401:task-definition/aws-service-liblib-app-dev:1"
+      + triggers                           = (known after apply)
+      + wait_for_steady_state              = false
+
+      + load_balancer {
+          + container_name   = "app"
+          + container_port   = 80
+          + target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:216989128401:targetgroup/h120260114214146950800000005/0f429edc44506364"
+            # (1 unchanged attribute hidden)
+        }
+
+      + network_configuration {
+          + assign_public_ip = false
+          + security_groups  = [
+              + "sg-001b8efb94935e487",
+            ]
+          + subnets          = [
+              + "subnet-005c59fc7f33d4558",
+            ]
+        }
+    }
+
+  # module.iam.aws_iam_access_key.cli_user_key will be created
+  + resource "aws_iam_access_key" "cli_user_key" {
+      + create_date                    = (known after apply)
+      + encrypted_secret               = (known after apply)
+      + encrypted_ses_smtp_password_v4 = (known after apply)
+      + id                             = (known after apply)
+      + key_fingerprint                = (known after apply)
+      + secret                         = (sensitive value)
+      + ses_smtp_password_v4           = (sensitive value)
+      + status                         = "Active"
+      + user                           = "cli-user"
+    }
+
+  # module.iam.aws_iam_user.cli_user will be created
+  + resource "aws_iam_user" "cli_user" {
+      + arn           = (known after apply)
+      + force_destroy = false
+      + id            = (known after apply)
+      + name          = "cli-user"
+      + path          = "/"
+      + tags          = {
+          + "Description" = "IAM user for CLI access"
+        }
+      + tags_all      = {
+          + "CostCenter"  = "App-Development"
+          + "Description" = "IAM user for CLI access"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+      + unique_id     = (known after apply)
+    }
+
+  # module.iam.aws_iam_user_policy_attachment.admin_access will be created
+  + resource "aws_iam_user_policy_attachment" "admin_access" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+      + user       = "cli-user"
+    }
+
+  # module.alb.module.alb.aws_lb.this[0] will be created
+  + resource "aws_lb" "this" {
+      + arn                                                          = (known after apply)
+      + arn_suffix                                                   = (known after apply)
+      + client_keep_alive                                            = 3600
+      + desync_mitigation_mode                                       = "defensive"
+      + dns_name                                                     = (known after apply)
+      + drop_invalid_header_fields                                   = true
+      + enable_deletion_protection                                   = true
+      + enable_http2                                                 = true
+      + enable_tls_version_and_cipher_suite_headers                  = false
+      + enable_waf_fail_open                                         = false
+      + enable_xff_client_port                                       = false
+      + enable_zonal_shift                                           = false
+      + enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      + id                                                           = (known after apply)
+      + idle_timeout                                                 = 60
+      + internal                                                     = false
+      + ip_address_type                                              = (known after apply)
+      + load_balancer_type                                           = "application"
+      + name                                                         = "aws-service-liblib-dev-alb"
+      + name_prefix                                                  = (known after apply)
+      + preserve_host_header                                         = false
+      + security_groups                                              = [
+          + "sg-0b39bec7d2002f905",
+        ]
+      + subnets                                                      = [
+          + "subnet-01a9143522a3d0c34",
+        ]
+      + tags                                                         = {
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                                                     = {
+          + "CostCenter"            = "App-Development"
+          + "Environment"           = "Development"
+          + "ManagedBy"             = "Terraform"
+          + "Owner"                 = "nour1985"
+          + "Project"               = "DigitalHall"
+          + "Service"               = "NextJS-Portal"
+          + "terraform-aws-modules" = "alb"
+        }
+      + vpc_id                                                       = (known after apply)
+      + xff_header_processing_mode                                   = "append"
+      + zone_id                                                      = (known after apply)
+
+      + subnet_mapping (known after apply)
+
+      + timeouts {}
+    }
+
+  # module.alb.module.alb.aws_lb_listener.this["http"] will be created
+  + resource "aws_lb_listener" "this" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 80
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags                                                                  = {
+          + "terraform-aws-modules" = "alb"
+        }
+      + tags_all                                                              = {
+          + "CostCenter"            = "App-Development"
+          + "Environment"           = "Development"
+          + "ManagedBy"             = "Terraform"
+          + "Owner"                 = "nour1985"
+          + "Project"               = "DigitalHall"
+          + "Service"               = "NextJS-Portal"
+          + "terraform-aws-modules" = "alb"
+        }
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order            = (known after apply)
+          + target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:216989128401:targetgroup/h120260114214146950800000005/0f429edc44506364"
+          + type             = "forward"
+        }
+
+      + mutual_authentication (known after apply)
+    }
+
+Plan: 8 to add, 1 to change, 1 to destroy.
+
+Changes to Outputs:
+  + alb_dns_name        = (known after apply)
+  + cli_user_access_key = (known after apply)
+  + cli_user_arn        = (known after apply)
+  + cli_user_secret_key = (sensitive value)

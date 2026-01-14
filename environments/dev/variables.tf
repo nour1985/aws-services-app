@@ -1,7 +1,6 @@
 variable "aws_region" {
-  description = "AWS region"
+  description = "AWS Region"
   type        = string
-  default     = "us-east-1"
 }
 
 variable "aws_access_key" {
@@ -17,7 +16,6 @@ variable "aws_secret_key" {
 }
 
 variable "cli_user_name" {
-  description = "Name of the CLI IAM user"
+  description = "The name of the CLI user"
   type        = string
-  default     = "cli-user"
 }

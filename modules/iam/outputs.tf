@@ -10,3 +10,7 @@ output "secret_access_key" {
   value = aws_iam_access_key.cli_user_key.secret
   sensitive = true
 }
+
+output "ecs_execution_role_arn" {
+  value = aws_iam_role.ecs_execution_role.arn
+}

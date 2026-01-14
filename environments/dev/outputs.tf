@@ -13,3 +13,8 @@ output "cli_user_secret_key" {
   value       = module.iam.secret_access_key
   sensitive   = true
 }
+
+output "alb_dns_name" {
+  description = "DNS name of the application load balancer"
+  value       = module.alb.dns_name
+}
