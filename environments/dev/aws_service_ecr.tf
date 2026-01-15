@@ -1,5 +1,5 @@
 module "ecr" {
   source = "../../modules/ecr"
 
-  repository_name = "aws-service-liblib-backend-dev"
+  repository_name = "aws-service-liblib-digital-hall-dev"
 }

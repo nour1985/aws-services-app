@@ -3,6 +3,45 @@
 ## Overview
 This directory defines the infrastructure for the **Development** environment of the AWS Services App (DigitalHall Project). The infrastructure is managed using Terraform and focuses on establishing a secure networking foundation and resource management strategy.
 
+## File Organization
+
+The Terraform configuration is organized by **logical function** rather than cost:
+
+*   **`aws_service_vpc.tf`**: Network foundation (VPC, Subnets, NAT, IGW)
+*   **`aws_service_compute.tf`**: Application runtime stack (ALB, ECS Cluster, Fargate Service)
+*   **`aws_service_ecr.tf`**: Container image registry
+*   **`aws_service_pipeline.tf`**: CI/CD automation (CodePipeline, CodeBuild)
+*   **`aws_service_iam.tf`**: Identity and access management
+*   **`aws_service_group.tf`**: Resource grouping and tagging
+
+> **Why group ALB + ECS + Fargate together?**  
+> These three components form a single **application delivery stack**: ALB routes traffic → ECS orchestrates → Fargate runs containers. Grouping them in `aws_service_compute.tf` makes the dependency chain clear and simplifies lifecycle management.
+
+## Cost Breakdown
+
+Understanding the monthly costs for this environment:
+
+| Resource | Monthly Cost | Can Scale to Zero? | Notes |
+|----------|-------------|-------------------|-------|
+| **VPC, Subnets, IGW** | Free | N/A | Core networking has no charge |
+| **NAT Gateway** | ~$32 | ❌ No | Charged per hour + data transfer |
+| **Application Load Balancer** | ~$16 | ❌ No | Charged per hour + LCU usage |
+| **Fargate Tasks** | ~$10-15 | ✅ Yes | Set `desired_count = 0` to stop |
+| **ECR Storage** | Free* | N/A | First 500MB free, then $0.10/GB |
+| **CodePipeline** | Free* | N/A | First pipeline free, runs on-demand |
+| **Security Groups, IAM** | Free | N/A | No charge for these resources |
+
+**Total Running Cost**: ~$58-63/month  
+**Minimum Cost (scaled down)**: ~$16/month (ALB only, with Fargate at 0 and NAT deleted)
+
+### Cost Optimization Tips
+
+*   **Development Hours Only**: Scale Fargate to 0 when not actively developing
+*   **Remove NAT Gateway**: Delete when not needed (saves $32/month, but breaks private subnet internet access)
+*   **Keep ALB Running**: At $16/month, it's worth keeping for instant wake-up capability
+
+
+
 ## Resources & Aims
 
 The following resources are provisioned in this environment:
@@ -12,10 +51,10 @@ The following resources are provisioned in this environment:
 *   **Aim**: To provide an isolated virtual network environment for deploying secure applications.
 *   **Configuration**:
     *   **CIDR Block**: `10.0.0.0/16`
-    *   **Availability Zones**: `us-east-1a`
+    *   **Availability Zones**: `us-east-1a`, `us-east-1b`
     *   **Subnets**:
-        *   **Public Subnet** (`10.0.101.0/24`): Intended for resources that require direct public internet access (e.g., Load Balancers, Jump Hosts). Includes a NAT Gateway.
-        *   **Private Subnet** (`10.0.1.0/24`): Intended for internal resources (e.g., Application Servers, Databases). Instances here can access the internet via the NAT Gateway but cannot be reached directly from the internet.
+        *   **Public Subnets** (`10.0.101.0/24`, `10.0.102.0/24`): Intended for resources that require direct public internet access (e.g., Load Balancers, Jump Hosts). Includes a NAT Gateway.
+        *   **Private Subnets** (`10.0.1.0/24`, `10.0.2.0/24`): Intended for internal resources (e.g., Application Servers, Databases). Instances here can access the internet via the NAT Gateway but cannot be reached directly from the internet.
     *   **Gateways**:
         *   **Internet Gateway (IGW)**: Enables connectivity between the VPC and the internet.
         *   **NAT Gateway**: Located in the Public Subnet, it allows instances in the Private Subnet to initiate outbound traffic to the internet while preventing inbound traffic.
@@ -28,7 +67,7 @@ The following resources are provisioned in this environment:
     *   `Environment`: `Development`
 
 ### 3. Elastic Container Registry (ECR)
-*   **Resource Name**: `aws-service-liblib-backend-dev`
+*   **Resource Name**: `aws-service-liblib-digital-hall-dev`
 *   **Aim**: To store and manage Docker container images for the application backend (Next.js).
 *   **Configuration**:
     *   **Mutability**: `MUTABLE` (images can be overwritten).
@@ -36,7 +75,7 @@ The following resources are provisioned in this environment:
 
 ### 4. Application Load Balancer (ALB)
 *   **Resource Name**: `aws-service-liblib-dev-alb`
-*   **Aim**: To distribute incoming HTTP traffic across multiple targets (Fargate tasks) in different Availability Zones (currently single AZ for Dev).
+*   **Aim**: To distribute incoming HTTP traffic across multiple targets (Fargate tasks) in different Availability Zones (Multi-AZ).
 *   **Configuration**:
     *   **Type**: `Application` (Layer 7).
     *   **Placement**: `Public Subnet` (Internet-facing).
@@ -52,27 +91,23 @@ The following resources are provisioned in this environment:
     *   **Container Insights**: `Enabled` (For monitoring).
     *   **Task Definition**: Configured for `nginx` (placeholder) with 256 CPU / 512 MB Memory.
 
-### 6. AWS CodeBuild (CI/CD)
-*   **Resource Name**: `aws-service-liblib-backend-build`
-*   **Aim**: To automate the build and delivery pipeline for the application. It fetches code, builds the Docker image, and pushes it to ECR.
-*   **Configuration**:
-    *   **Source**: GitHub Repository (`https://github.com/nour1985/Liblib-Digital-Hall-5.git`).
-    *   **Trigger**: Webhook enabled for `PUSH` events to the `master` branch.
-    *   **Environment**: Linux container running Docker (Privileged Mode enabled).
-    *   **Build Spec**: Inline YAML defining login, build, and push commands.
-
+### 6. CodePipeline (CI/CD)
+*   **Pipeline Name**: `aws-service-liblib-dev-pipeline`
+*   **Aim**: To automate the delivery of application updates from code commit to deployment.
+*   **Workflow**:
+    1.  **Source**: Triggers on push to `master` branch in GitHub.
+    2.  **Build**: Uses **CodeBuild** (`aws-service-liblib-dev-pipeline-build`) to build the Docker image using `buildspec.yml`, push it to ECR, and trigger an ECS deployment.
 
 ## Architecture & Connectivity
 
-The infrastructure follows a standard tiered VPC network architecture:
+The infrastructure follows a standard tiered VPC network architecture with a fully automated CI/CD pipeline:
 
 1.  **Internet Access**: The **Internet Gateway** is attached to the VPC to handle traffic to and from the internet.
 2.  **Public Zone**: The **Public Subnet** has a route table that directs external traffic to the Internet Gateway. It hosts the **NAT Gateway**.
 3.  **Private Zone**: The **Private Subnet** uses a route table that directs internet-bound traffic to the **NAT Gateway** in the public subnet. This ensures private resources can update or connect to external APIs without being exposed.
 4.  **Application Hosting**: The **ALB** sits in the Public Subnet to accept user traffic. It forwards requests to **Fargate Tasks** running securely in the Private Subnet.
-4.  **Application Hosting**: The **ALB** sits in the Public Subnet to accept user traffic. It forwards requests to **Fargate Tasks** running securely in the Private Subnet.
-5.  **CI/CD Pipeline**: **CodeBuild** is triggered by a push to GitHub. It builds the container and pushes the artifact to **ECR**. Fargate can then pull this new image (manual service update or automation required for auto-deploy).
-6.  **Tag-based Management**: All resources created in this environment automatically inherit default tags (defined in `provider.tf`), which allows the **Resource Group** to automatically identify and include them.
+5.  **Tag-based Management**: All resources created in this environment automatically inherit default tags (defined in `provider.tf`), which allows the **Resource Group** to automatically identify and include them.
+6.  **Continuous Deployment**: Any push to the `master` branch triggers **CodePipeline**. **CodeBuild** builds the Docker container, pushes it to **ECR**, and forces **ECS Fargate** to update the service with the new image.
 
 ### Architecture Diagram
 
@@ -100,7 +135,7 @@ graph TB
                 Fargate[Fargate Service: aws-service-liblib-app-dev]
                 style Fargate fill:#ffcc80,stroke:#e65100,stroke-dasharray: 5 5
             end
-
+            
             %% Routing connections
             IGW <--> Public_Subnet
             Public_Subnet -- Route to IGW --> IGW
@@ -118,12 +153,16 @@ graph TB
             style RG fill:#e8eaf6,stroke:#3f51b5
         end
 
-        ECR[ECR: aws-service-liblib-backend-dev]
+        ECR[ECR: aws-service-liblib-digital-hall-dev]
         style ECR fill:#e1bee7,stroke:#8e24aa
 
-        CodeBuild[CodeBuild Project]
-        style CodeBuild fill:#ffab91,stroke:#d84315
-
+        subgraph CI_CD [CI/CD Pipeline]
+            style CI_CD fill:#fff3e0,stroke:#e65100,stroke-dasharray: 5 5
+            Pipeline[CodePipeline]
+            style Pipeline fill:#ffcc80,stroke:#e65100
+            Build[CodeBuild]
+            style Build fill:#ffab91,stroke:#d84315
+        end
         
         %% Logical connection
         RG -.->|Groups by Tags| VPC
@@ -132,13 +171,16 @@ graph TB
         RG -.->|Groups by Tags| ECR
         RG -.->|Groups by Tags| ALB
         RG -.->|Groups by Tags| Fargate
+        RG -.->|Groups by Tags| Pipeline
         
         %% Dependency
         Fargate -.->|Pulls Image| ECR
 
         %% CI/CD Flow
         Developer(Developer) -- Push --> GitHub(GitHub Repo)
-        GitHub -- Webhook --> CodeBuild
-        CodeBuild -- Push Image --> ECR
+        GitHub -- Triggers --> Pipeline
+        Pipeline -- Orchestrates --> Build
+        Build -- Pushes Image --> ECR
+        Build -- Updates Service --> Fargate
     end
 ```

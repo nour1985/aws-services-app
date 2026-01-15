@@ -12,7 +12,7 @@ Terraform will perform the following actions:
       + arn                  = (known after apply)
       + id                   = (known after apply)
       + image_tag_mutability = "MUTABLE"
-      + name                 = "aws-service-liblib-backend-dev"
+      + name                 = "aws-service-liblib-digital-hall-dev"
       + registry_id          = (known after apply)
       + repository_url       = (known after apply)
       + tags_all             = {
@@ -291,6 +291,172 @@ Terraform will perform the following actions:
       + id         = (known after apply)
       + policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
       + user       = "deployer"
+    }
+
+  # module.pipeline.aws_codepipeline.main will be created
+  + resource "aws_codepipeline" "main" {
+      + arn            = (known after apply)
+      + execution_mode = "SUPERSEDED"
+      + id             = (known after apply)
+      + name           = "aws-service-liblib-dev-pipeline"
+      + pipeline_type  = "V1"
+      + role_arn       = (known after apply)
+      + tags_all       = {
+          + "CostCenter"  = "App-Development"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+      + trigger_all    = (known after apply)
+
+      + artifact_store {
+          + location = (known after apply)
+          + type     = "S3"
+            # (1 unchanged attribute hidden)
+        }
+
+      + stage {
+          + name = "Source"
+
+          + action {
+              + category         = "Source"
+              + configuration    = (known after apply)
+              + name             = "Source"
+              + output_artifacts = [
+                  + "source_output",
+                ]
+              + owner            = "AWS"
+              + provider         = "CodeStarSourceConnection"
+              + region           = (known after apply)
+              + run_order        = (known after apply)
+              + version          = "1"
+            }
+        }
+      + stage {
+          + name = "Approval"
+
+          + action {
+              + category  = "Approval"
+              + name      = "ManualApproval"
+              + owner     = "AWS"
+              + provider  = "Manual"
+              + region    = (known after apply)
+              + run_order = (known after apply)
+              + version   = "1"
+            }
+        }
+    }
+
+  # module.pipeline.aws_codestarconnections_connection.github_conn will be created
+  + resource "aws_codestarconnections_connection" "github_conn" {
+      + arn               = (known after apply)
+      + connection_status = (known after apply)
+      + id                = (known after apply)
+      + name              = "aws-service-liblib-dev-pipeline-conn"
+      + provider_type     = "GitHub"
+      + tags_all          = {
+          + "CostCenter"  = "App-Development"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+    }
+
+  # module.pipeline.aws_iam_role.codepipeline_role will be created
+  + resource "aws_iam_role" "codepipeline_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "codepipeline.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "aws-service-liblib-dev-pipeline-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = {
+          + "CostCenter"  = "App-Development"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.pipeline.aws_iam_role_policy.codepipeline_policy will be created
+  + resource "aws_iam_role_policy" "codepipeline_policy" {
+      + id          = (known after apply)
+      + name        = "aws-service-liblib-dev-pipeline-policy"
+      + name_prefix = (known after apply)
+      + policy      = (known after apply)
+      + role        = (known after apply)
+    }
+
+  # module.pipeline.aws_s3_bucket.pipeline_bucket will be created
+  + resource "aws_s3_bucket" "pipeline_bucket" {
+      + acceleration_status         = (known after apply)
+      + acl                         = (known after apply)
+      + arn                         = (known after apply)
+      + bucket                      = (known after apply)
+      + bucket_domain_name          = (known after apply)
+      + bucket_prefix               = "liblib-pl-art-"
+      + bucket_regional_domain_name = (known after apply)
+      + force_destroy               = true
+      + hosted_zone_id              = (known after apply)
+      + id                          = (known after apply)
+      + object_lock_enabled         = (known after apply)
+      + policy                      = (known after apply)
+      + region                      = (known after apply)
+      + request_payer               = (known after apply)
+      + tags_all                    = {
+          + "CostCenter"  = "App-Development"
+          + "Environment" = "Development"
+          + "ManagedBy"   = "Terraform"
+          + "Owner"       = "nour1985"
+          + "Project"     = "DigitalHall"
+          + "Service"     = "NextJS-Portal"
+        }
+      + website_domain              = (known after apply)
+      + website_endpoint            = (known after apply)
+
+      + cors_rule (known after apply)
+
+      + grant (known after apply)
+
+      + lifecycle_rule (known after apply)
+
+      + logging (known after apply)
+
+      + object_lock_configuration (known after apply)
+
+      + replication_configuration (known after apply)
+
+      + server_side_encryption_configuration (known after apply)
+
+      + versioning (known after apply)
+
+      + website (known after apply)
     }
 
   # module.resource_group.aws_resourcegroups_group.this will be created
@@ -1048,7 +1214,7 @@ Terraform will perform the following actions:
         }
     }
 
-Plan: 37 to add, 0 to change, 0 to destroy.
+Plan: 42 to add, 0 to change, 0 to destroy.
 
 Changes to Outputs:
   + alb_dns_name        = (known after apply)

@@ -66,6 +66,11 @@ resource "aws_ecs_service" "this" {
     assign_public_ip = false
   }
 
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+
+  health_check_grace_period_seconds = 300
+
   load_balancer {
     target_group_arn = var.target_group_arn
     container_name   = "app"

@@ -42,11 +42,24 @@ module "alb" {
 
   target_groups = {
     default-target-group = {
-      name_prefix      = "h1"
-      protocol         = "HTTP"
-      port             = 80
-      target_type      = "ip"
-      create_attachment = false
+      name_prefix           = "h1"
+      protocol              = "HTTP"
+      port                  = 80
+      target_type           = "ip"
+      create_attachment     = false
+      deregistration_delay  = 30
+      
+      health_check = {
+        enabled             = true
+        interval            = 15
+        path                = "/"
+        port                = "traffic-port"
+        healthy_threshold   = 2
+        unhealthy_threshold = 2
+        timeout             = 5
+        protocol            = "HTTP"
+        matcher             = "200-299"
+      }
     }
   }
 }

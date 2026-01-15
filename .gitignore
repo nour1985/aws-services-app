@@ -26,3 +26,4 @@ terraform.rc
 # Ignore plan files
 *.tfplan
 *plan_output.txt
+rename_plan.txt

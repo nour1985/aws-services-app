@@ -30,8 +30,8 @@ module "fargate" {
   task_family     = "aws-service-liblib-app-dev"
   container_image = "nginx:latest" # Placeholder until we build our own
   container_port  = 80
-  cpu             = 256
-  memory          = 512
+  cpu             = 1024
+  memory          = 2048
   
   # IAM
   execution_role_arn = module.iam.ecs_execution_role_arn
