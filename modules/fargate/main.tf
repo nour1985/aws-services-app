@@ -1,3 +1,14 @@
+# CloudWatch Log Group - Create explicitly to prevent startup failures
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/ecs/${var.service_name}"
+  retention_in_days = 7
+
+  tags = {
+    Name      = "${var.service_name}-logs"
+    ManagedBy = "Terraform"
+  }
+}
+
 resource "aws_security_group" "this" {
   name        = "${var.service_name}-sg"
   description = "Security group for Fargate service"
@@ -27,6 +38,12 @@ resource "aws_ecs_task_definition" "this" {
   execution_role_arn       = var.execution_role_arn
   task_role_arn            = var.task_role_arn
 
+  # Specify runtime platform for consistency
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "X86_64"
+  }
+
   container_definitions = jsonencode([
     {
       name  = "app"
@@ -39,14 +56,13 @@ resource "aws_ecs_task_definition" "this" {
         }
       ]
       essential = true
-      # Basic logging config
+      # Logging config - uses explicitly created log group
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/ecs/${var.service_name}"
+          awslogs-group         = aws_cloudwatch_log_group.this.name
           awslogs-region        = var.region
           awslogs-stream-prefix = "ecs"
-          awslogs-create-group  = "true"
         }
       }
     }
@@ -59,6 +75,9 @@ resource "aws_ecs_service" "this" {
   task_definition = aws_ecs_task_definition.this.arn
   desired_count   = var.desired_count
   launch_type     = "FARGATE"
+  
+  # Use latest stable Fargate platform
+  platform_version = "LATEST"
 
   network_configuration {
     subnets          = var.private_subnets
@@ -68,6 +87,12 @@ resource "aws_ecs_service" "this" {
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
+  
+  # Circuit breaker - automatically rolls back failed deployments
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   health_check_grace_period_seconds = 300
 
@@ -76,4 +101,9 @@ resource "aws_ecs_service" "this" {
     container_name   = "app"
     container_port   = var.container_port
   }
+  
+  # Ensure log group is created before service starts
+  depends_on = [
+    aws_cloudwatch_log_group.this
+  ]
 }

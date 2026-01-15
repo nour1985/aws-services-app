@@ -7,6 +7,8 @@ module "alb" {
   load_balancer_type = "application"
   internal           = var.internal
 
+  enable_deletion_protection = false
+
 
   vpc_id  = var.vpc_id
   subnets = var.public_subnets
@@ -44,7 +46,7 @@ module "alb" {
     default-target-group = {
       name_prefix           = "h1"
       protocol              = "HTTP"
-      port                  = 80
+      port                  = var.target_group_port
       target_type           = "ip"
       create_attachment     = false
       deregistration_delay  = 30

@@ -18,3 +18,9 @@ variable "internal" {
   type        = bool
   default     = false
 }
+
+variable "target_group_port" {
+  description = "Port for the ALB Target Group to forward traffic to"
+  type        = number
+  default     = 80
+}

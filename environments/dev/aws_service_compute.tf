@@ -5,7 +5,7 @@ module "alb" {
   vpc_id         = module.vpc.vpc_id
   public_subnets = module.vpc.public_subnets
   internal       = false
-
+  target_group_port = 3000
 }
 
 module "ecs_cluster" {
@@ -28,8 +28,8 @@ module "fargate" {
 
   # Task Definition
   task_family     = "aws-service-liblib-app-dev"
-  container_image = "nginx:latest" # Placeholder until we build our own
-  container_port  = 80
+  container_image = "216989128401.dkr.ecr.us-east-1.amazonaws.com/aws-service-liblib-digital-hall-dev:latest"
+  container_port  = 3000
   cpu             = 1024
   memory          = 2048
   
