@@ -38,6 +38,18 @@ graph TD
     *   **🔌 NAT Gateway**
         *   **Aim**: Allows private resources (Fargate) to update/pull images without accepting incoming traffic.
         *   **URL**: [View NAT Gateway](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#NatGateways:)
+    *   **🔀 Route Tables**
+        *   **Aim**: Rules that determine where network traffic from your subnets or gateway is directed.
+        *   **URL**: [View Route Tables](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#RouteTables:)
+        *   **Details**:
+            *   **Public**: `aws-service-liblib-dev-vpc-public-rt` (Routes `0.0.0.0/0` → IGW)
+            *   **Private**: `aws-service-liblib-dev-vpc-private-rt` (Routes `0.0.0.0/0` → NAT Gateway)
+    *   **🛡️ Security Groups**
+        *   **Aim**: Virtual firewalls for your instances/tasks.
+        *   **URL**: [View Security Groups](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#SecurityGroups:)
+        *   **Details**:
+            *   `aws-service-liblib-dev-alb-sg`: Allows Inbound HTTP (80) from World (`0.0.0.0/0`).
+            *   `aws-service-liblib-app-dev-sg`: Allows Inbound TCP (3000) *only* from ALB Security Group.
 
 ---
 
@@ -65,8 +77,9 @@ graph TD
         *   **Aim**: Ensures exactly 1 copy of your app is always running and healthy.
         *   **URL**: [View Service](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/aws-service-liblib-dev-cluster/services/aws-service-liblib-app-dev/health?region=us-east-1)
     *   **📋 Task Definition**
-        *   **Name**: `aws-service-liblib-app-dev` (Latest Revision)
+        *   **Name**: `aws-service-liblib-app-dev` (Latest Revision: 15)
         *   **Aim**: The blueprint. Defines the container image, memory (2GB), CPU (1 vCPU), and Port (3000).
+        *   **Note**: Stale revisions are automatically cleaned up to keep the environment tidy.
         *   **URL**: [View Task Definition](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/aws-service-liblib-app-dev?region=us-east-1)
 
 ---
