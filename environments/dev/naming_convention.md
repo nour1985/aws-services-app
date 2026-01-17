@@ -33,6 +33,9 @@ The primary naming convention follows this structure:
     *   Shape: Matches Service Name.
 
 ### Storage & Artifacts
+*   **S3 Bucket**: `aws-service-liblib-dev-s3`
+    *   Pattern: `aws-service-[project]-[environment]-s3`
+    *   *Note: S3 naming rules forbid underscores, so updated `_s3` to `-s3`.*
 *   **ECR Repository**: `aws-service-liblib-digital-hall-dev`
     *   Pattern: `aws-service-[project]-[app_name]-[environment]`
 
@@ -40,6 +43,8 @@ The primary naming convention follows this structure:
 *   **CodePipeline**: `aws-service-liblib-dev-pipeline`
     *   Pattern: `aws-service-[project]-[environment]-pipeline`
 *   **CodeBuild**: `aws-service-liblib-dev-pipeline-build` (Inferred)
+*   **CodeStar Connection**: `aws-service-liblib-github-connection`
+    *   Pattern: `aws-service-[project]-[provider]-connection`
 
 ### Grouping
 *   **Resource Group**: `service-liblib-dev-group`

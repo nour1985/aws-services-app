@@ -10,4 +10,7 @@ module "pipeline" {
   cluster_name = module.ecs_cluster.cluster_name
   service_name = module.fargate.service_name
   ecr_repository_arn  = module.ecr.repository_arn
+  
+  connection_name      = "aws-service-liblib-github-connection"
+  artifact_bucket_name = "aws-service-liblib-dev-s3"
 }

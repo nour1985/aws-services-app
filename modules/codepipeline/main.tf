@@ -1,11 +1,11 @@
 resource "aws_codestarconnections_connection" "github_conn" {
-  name          = "liblib-github-conn"
+  name          = var.connection_name
   provider_type = "GitHub"
   tags          = var.tags
 }
 
 resource "aws_s3_bucket" "pipeline_bucket" {
-  bucket_prefix = "liblib-pl-art-"
+  bucket        = var.artifact_bucket_name
   force_destroy = true
   tags          = var.tags
 }

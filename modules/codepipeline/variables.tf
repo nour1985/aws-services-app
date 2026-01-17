@@ -44,4 +44,14 @@ variable "ecr_repository_arn" {
   type        = string
 }
 
+variable "connection_name" {
+  description = "Name of the CodeStar Connection"
+  type        = string
+  default     = "aws-service-liblib-github-connection"
+}
 
+variable "artifact_bucket_name" {
+  description = "Name of the S3 bucket for pipeline artifacts"
+  type        = string
+  default     = null # If null, will use prefix strategy or default logic if we implement it, but for now we'll force it or default it
+}
