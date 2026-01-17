@@ -1,13 +1,23 @@
 resource "aws_codestarconnections_connection" "github_conn" {
   name          = var.connection_name
   provider_type = "GitHub"
-  tags          = var.tags
+  tags = merge(
+    var.tags,
+    {
+      Name = var.connection_name
+    }
+  )
 }
 
 resource "aws_s3_bucket" "pipeline_bucket" {
   bucket        = var.artifact_bucket_name
   force_destroy = true
-  tags          = var.tags
+  tags = merge(
+    var.tags,
+    {
+      Name = var.artifact_bucket_name
+    }
+  )
 }
 
 # -------------------------------------------------------------------------
@@ -200,7 +210,12 @@ resource "aws_codebuild_project" "build_project" {
     buildspec = "buildspec.yml" # Expecting this file in the root of the repo
   }
 
-  tags = var.tags
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.pipeline_name}-build"
+    }
+  )
 }
 
 # -------------------------------------------------------------------------
@@ -209,7 +224,12 @@ resource "aws_codebuild_project" "build_project" {
 resource "aws_codepipeline" "main" {
   name     = var.pipeline_name
   role_arn = aws_iam_role.codepipeline_role.arn
-  tags     = var.tags
+  tags = merge(
+    var.tags,
+    {
+      Name = var.pipeline_name
+    }
+  )
 
   artifact_store {
     location = aws_s3_bucket.pipeline_bucket.bucket

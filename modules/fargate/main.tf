@@ -27,6 +27,13 @@ resource "aws_security_group" "this" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.service_name}-sg"
+    }
+  )
 }
 
 resource "aws_ecs_task_definition" "this" {

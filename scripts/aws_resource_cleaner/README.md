@@ -2,6 +2,20 @@
 
 This directory contains a suite of scripts designed to safe-clean AWS resources from your account (`us-east-1`).
 
+## Technology Stack: Python & Boto3
+
+These scripts use **Boto3** (AWS SDK for Python) to interact directly with AWS APIs.
+
+**Capabilities:**
+*   **Direct API Control:** Execute raw AWS commands (e.g., "delete this specific ID now").
+*   **Universal Coverage:** Interact with almost every AWS service programmatically.
+*   **Logic-Based Operations:** Ideal for conditional tasks like "clean up resources older than X days."
+
+**Limitations (vs. Terraform):**
+*   **Imperative, Not Declarative:** Boto3 requires you to script *how* to do things (step-by-step). Terraform lets you define *what* the end state should be.
+*   **No State File:** Boto3 has no memory of previous deployments. Terraform maintains a state file (`.tfstate`) to track and manage infrastructure lifecycle.
+*   **Manual Dependency Handling:** In Boto3, you must manually code the order of operations (e.g., delete Subnets before VPC). Terraform automatically resolves these dependency graphs.
+
 ## Files
 *   **`config.py`**: Configuration file for defining the specific AWS Region and the report file path. **Check this file first** to ensure variables are correct.
 *   **`aws-services-reader.py`**: Scans the AWS account and generates a Markdown report of existing resources.

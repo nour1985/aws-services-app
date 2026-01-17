@@ -1,121 +1,109 @@
-# 🌳 AWS Infrastructure Map
+# Infrastructure Map (Digital Hall - Dev)
 
-This document visualizes your deployed resources as a tree. Use this to understand the hierarchy and purpose of each component.
+**Built on:** 2026-01-17
+**Region:** us-east-1
+**Environment:** Dev
+**Status:** ✅ Fully Deployed & Tagged
 
-**Region**: `us-east-1` (N. Virginia)
+## 🚀 App URL
+**[Click Here to Open App](http://digital-hall-dev-alb-99537214.us-east-1.elb.amazonaws.com/)**
+*(Note: Use HTTP, not HTTPS)*
+
+## 🏛️ Architecture Overview
 
 ```mermaid
 graph TD
     User((User)) --> ALB[Load Balancer]
-    ALB --> Fargate[Fargate Service]
-    Fargate --> ECR[(ECR Image)]
-    Pipeline[CodePipeline] --> Fargate
-    Pipeline --> CodeBuild[CodeBuild]
-    CodeBuild --> GitHub[GitHub Repo]
+    ALB --> TG[Target Group]
+    TG --> ECS[Fargate Service (Private)]
+    
+    subgraph VPC
+        ALB
+        ECS
+    end
+    
+    GitHub --> Pipeline
+    Pipeline --> CodeBuild
+    CodeBuild --> ECR[ECR Registry]
+    ECR --> ECS
 ```
 
----
+## 1. Network Layer (VPC)
+| Resource Type | Name (ID) | Console Link |
+| :--- | :--- | :--- |
+| **VPC** | `digital-hall-dev-vpc` | [View VPC](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#vpcs:search=digital-hall-dev-vpc) |
+| **Public Subnets** | `digital-hall-dev-vpc-subnet-pub` (x2) | [View Subnets](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#subnets:search=digital-hall-dev-vpc-subnet-pub) |
+| **Private Subnets** | `digital-hall-dev-vpc-subnet-priv` (x2) | [View Subnets](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#subnets:search=digital-hall-dev-vpc-subnet-priv) |
+| **Internet Gateway** | `digital-hall-dev-vpc-igw` | [View IGW](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#igws:search=digital-hall-dev-vpc-igw) |
+| **NAT Gateway** | `digital-hall-dev-vpc-nat` | [View NAT GW](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#NatGateways:search=digital-hall-dev-vpc-nat) |
+| **Route Tables** | `digital-hall-dev-vpc-public-rt`<br>`digital-hall-dev-vpc-private-rt`<br>`digital-hall-dev-vpc-default` | [View Route Tables](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#RouteTables:search=digital-hall-dev) |
 
-## 🏗️ Networking & Base Layer
+## 2. Access Layer (Load Balancing)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **ALB** | `digital-hall-dev-alb` | [View Load Balancer](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#LoadBalancers:search=digital-hall-dev-alb) |
+| **Public URL** | `digital-hall-dev-alb-99537214.us-east-1.elb.amazonaws.com` | [Open App](http://digital-hall-dev-alb-99537214.us-east-1.elb.amazonaws.com) |
+| **Listener** | HTTP:80 (ARN-based identifier) | [View Listeners](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#LoadBalancers:search=digital-hall-dev-alb) |
+| **Target Group** | `digital-hall-dev-alb-tg` | [View Target Group](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#TargetGroups:search=digital-hall-dev-alb-tg) |
+| **ALB Security Group** | `digital-hall-dev-alb-sg` | [View Security Group](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroups:search=digital-hall-dev-alb-sg) |
+| ↳ Ingress Rule | Allow HTTP (80) from `0.0.0.0/0` | *Sub-resource (not taggable)* |
+| ↳ Egress Rule | Allow All to `0.0.0.0/0` | *Sub-resource (not taggable)* |
 
-### 📦 VPC (Virtual Private Cloud)
-*   **Name**: `aws-service-liblib-dev-vpc`
-*   **Aim**: The isolated network container for all your resources.
-*   **URL**: [View VPC](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#VpcDetails:VpcId=vpc-0b99dbf83e8091f46)
-    *   **📂 Subnets**
-        *   **Aim**: Logical partitions of the VPC.
-        *   **URL**: [View Subnets](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#subnets:)
-        *   **Details**:
-            *   **Public (For ALB)**:
-                *   `aws-service-liblib-dev-vpc-public-us-east-1a` (`subnet-0e2e2e966cff9489b`) - `10.0.101.0/24`
-                *   `aws-service-liblib-dev-vpc-public-us-east-1b` (`subnet-04bc2a99d5717bbf0`) - `10.0.102.0/24`
-            *   **Private (For App/Fargate)**:
-                *   `aws-service-liblib-dev-vpc-private-us-east-1a` (`subnet-0c3432f68d3f125c5`) - `10.0.1.0/24`
-                *   `aws-service-liblib-dev-vpc-private-us-east-1b` (`subnet-0cc3873e9544f23a1`) - `10.0.2.0/24`
-    *   **🌐 Internet Gateway**
-        *   **Aim**: Allows the public internet to reach the ALB.
-        *   **URL**: [View IGW](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#igws:)
-    *   **🔌 NAT Gateway**
-        *   **Aim**: Allows private resources (Fargate) to update/pull images without accepting incoming traffic.
-        *   **URL**: [View NAT Gateway](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#NatGateways:)
-    *   **🔀 Route Tables**
-        *   **Aim**: Rules that determine where network traffic from your subnets or gateway is directed.
-        *   **URL**: [View Route Tables](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#RouteTables:)
-        *   **Details**:
-            *   **Public**: `aws-service-liblib-dev-vpc-public-rt` (Routes `0.0.0.0/0` → IGW)
-            *   **Private**: `aws-service-liblib-dev-vpc-private-rt` (Routes `0.0.0.0/0` → NAT Gateway)
-    *   **🛡️ Security Groups**
-        *   **Aim**: Virtual firewalls for your instances/tasks.
-        *   **URL**: [View Security Groups](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#SecurityGroups:)
-        *   **Details**:
-            *   `aws-service-liblib-dev-alb-sg`: Allows Inbound HTTP (80) from World (`0.0.0.0/0`).
-            *   `aws-service-liblib-app-dev-sg`: Allows Inbound TCP (3000) *only* from ALB Security Group.
+## 3. Compute Layer (Container)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **ECS Cluster** | `digital-hall-dev-cluster` | [View Cluster](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/digital-hall-dev-cluster/services?region=us-east-1) |
+| **ECS Service** | `digital-hall-dev-cluster-app-svc` | [View Service](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/digital-hall-dev-cluster/services/digital-hall-dev-cluster-app-svc?region=us-east-1) |
+| **Task Definition** | `digital-hall-dev-app-task` | [View Task Def](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/digital-hall-dev-app-task?region=us-east-1) |
+| **App Security Group** | `digital-hall-dev-cluster-app-svc-sg` | [View Security Group](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#SecurityGroups:search=digital-hall-dev-cluster-app-svc-sg) |
+| ↳ Ingress Rule | Allow TCP (3000) from ALB SG only | *Sub-resource (not taggable)* |
+| ↳ Egress Rule | Allow All to `0.0.0.0/0` | *Sub-resource (not taggable)* |
 
----
+## 4. Pipeline Layer (CI/CD)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **CodePipeline** | `digital-hall-dev-pipeline` | [View Pipeline](https://us-east-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/digital-hall-dev-pipeline/view?region=us-east-1) |
+| **CodeBuild Project** | `digital-hall-dev-pipeline-build` | [View Build Project](https://us-east-1.console.aws.amazon.com/codesuite/codebuild/projects/digital-hall-dev-pipeline-build/history?region=us-east-1) |
+| **CodeStar Connection** | `digital-hall-dev-conn` | [View Connection](https://us-east-1.console.aws.amazon.com/codesuite/settings/connections?region=us-east-1) |
+| ↳ GitHub Repo | `nour1985/Liblib-Digital-Hall-5` (master) | [View on GitHub](https://github.com/nour1985/Liblib-Digital-Hall-5) |
+| **S3 Artifacts Bucket** | `digital-hall-dev-s3-artifacts` | [View S3 Bucket](https://s3.console.aws.amazon.com/s3/buckets/digital-hall-dev-s3-artifacts?region=us-east-1) |
 
-## 🚦 Traffic & Load Balancing
+## 5. Storage Layer (Container Registry)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **ECR Repository** | `digital-hall-dev-ecr-repo` | [View ECR Repo](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/216989128401/digital-hall-dev-ecr-repo?region=us-east-1) |
 
-### ⚖️ Application Load Balancer
-*   **Name**: `aws-service-liblib-dev-alb`
-*   **Aim**: The entry point. Receives traffic on Port 80 and forwards it to your app.
-*   **URL**: [View Load Balancer](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-east-1#LoadBalancers:search=liblib)
-    *   **🎯 Target Group**
-        *   **Name**: `h1...` (Auto-generated)
-        *   **Aim**: Tracks the health of your Fargate tasks (Port 3000) and routes requests to them.
-        *   **URL**: [View Target Group](https://us-east-1.console.aws.amazon.com/ec2/v2/home?region=us-east-1#TargetGroups:)
+## 6. Observability (Monitoring & Logs)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **App Logs** | `/aws/ecs/digital-hall-dev-cluster-app-svc` | [View Logs](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Faws$252Fecs$252Fdigital-hall-dev-cluster-app-svc) |
+| **Build Logs** | `/aws/codebuild/digital-hall-dev-pipeline-build` | [View Logs](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Faws$252Fcodebuild$252Fdigital-hall-dev-pipeline-build) |
 
----
+## 7. Access Control (IAM)
+| Resource Type | Name | Purpose |
+| :--- | :--- | :--- |
+| **CLI User** | `deployer` | Terraform deployment user |
+| **ECS Execution Role** | `digital-hall-dev-ecs-exec-role` | Allows Fargate to pull images & write logs |
+| **Pipeline Role** | `digital-hall-dev-pipeline-role` | Orchestrates CI/CD stages |
+| **Build Role** | `digital-hall-dev-pipeline-codebuild-role` | Builds Docker images & pushes to ECR |
 
-## 🚀 Compute (The Application)
-
-### 🧱 ECS Cluster
-*   **Name**: `aws-service-liblib-dev-cluster`
-*   **Aim**: The logical grouping for your Fargate services.
-*   **URL**: [View Cluster](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/aws-service-liblib-dev-cluster/services?region=us-east-1)
-    *   **⚙️ ECS Service**
-        *   **Name**: `aws-service-liblib-app-dev`
-        *   **Aim**: Ensures exactly 1 copy of your app is always running and healthy.
-        *   **URL**: [View Service](https://us-east-1.console.aws.amazon.com/ecs/v2/clusters/aws-service-liblib-dev-cluster/services/aws-service-liblib-app-dev/health?region=us-east-1)
-    *   **📋 Task Definition**
-        *   **Name**: `aws-service-liblib-app-dev` (Latest Revision: 15)
-        *   **Aim**: The blueprint. Defines the container image, memory (2GB), CPU (1 vCPU), and Port (3000).
-        *   **Note**: Stale revisions are automatically cleaned up to keep the environment tidy.
-        *   **URL**: [View Task Definition](https://us-east-1.console.aws.amazon.com/ecs/v2/task-definitions/aws-service-liblib-app-dev?region=us-east-1)
+## 8. Management (Organization)
+| Resource Type | Name | Console Link |
+| :--- | :--- | :--- |
+| **Resource Group** | `digital-hall-dev-resource-group` | [View Resource Group](https://us-east-1.console.aws.amazon.com/resource-groups/group/digital-hall-dev-resource-group?region=us-east-1) |
 
 ---
 
-## 🐳 Container Storage
+## 📝 Notes
 
-### 📦 ECR Repository
-*   **Name**: `aws-service-liblib-digital-hall-dev`
-*   **Aim**: Stores your Docker images (e.g., `latest` tag).
-*   **URL**: [View Repository](https://us-east-1.console.aws.amazon.com/ecr/repositories/private/216989128401/aws-service-liblib-digital-hall-dev?region=us-east-1)
+### Tagging Status
+- ✅ **All major resources** are properly tagged with `Name`, `Project`, `Environment`, and `ManagedBy`
+- ⚠️ **Sub-resources** (Security Group Rules, Route Table Associations) show as "not tagged" - this is normal AWS behavior
 
----
+### Resource Naming Convention
+All resources follow the pattern: `digital-hall-dev-{resource-type}`
 
-## 🔄 CI/CD (Automation)
-
-### ⛓️ CodePipeline
-*   **Name**: `aws-service-liblib-dev-pipeline`
-*   **Aim**: Orchestrates the deployment. Listens to GitHub -> Builds Image -> Deploys to ECS.
-*   **URL**: [View Pipeline](https://us-east-1.console.aws.amazon.com/codesuite/codepipeline/pipelines/aws-service-liblib-dev-pipeline/view?region=us-east-1)
-    *   **🔧 CodeBuild**
-        *   **Name**: `aws-service-liblib-dev-pipeline-build`
-        *   **Aim**: The "Builder". Runs `docker build` and pushes to ECR.
-        *   **URL**: [View Build Project](https://us-east-1.console.aws.amazon.com/codesuite/codebuild/projects/aws-service-liblib-dev-pipeline-build/history?region=us-east-1)
-    *   **🔗 CodeStar Connection**
-        *   **Aim**: Secure link to your GitHub repository.
-        *   **URL**: [View Connections](https://us-east-1.console.aws.amazon.com/codesuite/settings/connections?region=us-east-1)
-    *   **🪣 Artifact Bucket (S3)**
-        *   **Name**: `liblib-pl-art-...`
-        *   **Aim**: Temporary storage for source code and build artifacts between pipeline stages.
-        *   **URL**: [View S3 Bucket](https://s3.console.aws.amazon.com/s3/buckets?region=us-east-1&q=liblib)
-
----
-
-## 🔍 Monitoring
-
-### 📝 CloudWatch Logs
-*   **Name**: `/ecs/aws-service-liblib-app-dev`
-*   **Aim**: Stores the `console.log` output from your Next.js application.
-*   **URL**: [View Logs](https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Fecs$252Faws-service-liblib-app-dev)
+### Cost Optimization
+- Using **FARGATE_SPOT** (70% cheaper than standard Fargate)
+- **Single NAT Gateway** (~$32/mo vs ~$64/mo for multi-AZ)
+- **Minimal compute** (0.25 vCPU / 512 MB RAM)

@@ -24,3 +24,15 @@ variable "target_group_port" {
   type        = number
   default     = 80
 }
+
+variable "target_group_name" {
+  description = "Explicit name for the target group"
+  type        = string
+  default     = null 
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}

@@ -14,12 +14,11 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "DigitalHall"
-      Environment = "Development"
+      Project     = local.project_name
+      Environment = local.environment
       Owner       = "nour1985"
       ManagedBy   = "Terraform"
       CostCenter  = "App-Development"
-      Service     = "NextJS-Portal"
     }
   }
 }

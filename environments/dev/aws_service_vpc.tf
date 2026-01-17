@@ -1,6 +1,6 @@
 module "vpc" {
   source = "../../modules/vpc"
 
-  vpc_name    = "aws-service-liblib-dev-vpc"
-  environment = "Development"
+  vpc_name    = local.naming.vpc
+  environment = local.environment
 }

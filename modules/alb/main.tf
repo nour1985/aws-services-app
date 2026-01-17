@@ -15,6 +15,13 @@ module "alb" {
 
   # Security Group
   create_security_group = true
+  security_group_name = "${var.alb_name}-sg"
+  security_group_tags = merge(
+    var.tags,
+    {
+      Name = "${var.alb_name}-sg"
+    }
+  )
   security_group_ingress_rules = {
     all_http = {
       from_port   = 80
@@ -42,9 +49,17 @@ module "alb" {
     }
   }
 
+  tags = merge(
+    var.tags,
+    {
+      Name = var.alb_name
+    }
+  )
+
   target_groups = {
     default-target-group = {
-      name_prefix           = "h1"
+      name                  = var.target_group_name # Use explicit name if provided
+      name_prefix           = var.target_group_name == null ? "h1" : null
       protocol              = "HTTP"
       port                  = var.target_group_port
       target_type           = "ip"

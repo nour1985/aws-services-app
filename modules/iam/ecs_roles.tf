@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_execution_role" {
-  name = "ecs-execution-role-${var.cli_user_name}"
+  name = var.execution_role_name
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -32,7 +32,7 @@ resource "aws_iam_role_policy" "ecs_execution_logs_policy" {
         Action = [
           "logs:CreateLogGroup"
         ]
-        Resource = "arn:aws:logs:us-east-1:216989128401:log-group:/ecs/*"
+        Resource = "arn:aws:logs:*:*:log-group:/ecs/*"
       }
     ]
   })

@@ -2,8 +2,8 @@ locals {
   # ------------------------------------------------------------------
   # Centralized Project Configuration
   # ------------------------------------------------------------------
-  project_name = "Digital-Hall"
-  environment  = "Dev"
+  project_name = "digital-hall"
+  environment  = "dev"
   
   # Base Naming Pattern: [project]-[environment]
   naming_prefix = "${local.project_name}-${local.environment}"
@@ -31,9 +31,9 @@ locals {
     listener        = "${local.naming_prefix}-alb-listener"
     
     # --- Compute & Containers (Parent: Cluster) ---
-    ecs_cluster     = "${local.naming_prefix}-cluster"
-    ecs_service     = "${local.naming_prefix}-cluster-app"       
-    task_definition = "${local.naming_prefix}-task"
+    ecs_cluster     = "${local.naming_prefix}-cluster"   # The container orchestration platform
+    ecs_service     = "${local.naming_prefix}-cluster-app-svc"   # (Child) Runs inside the Cluster. Manages tasks.
+    task_definition = "${local.naming_prefix}-cluster-app-task"  # (Reference) Blueprint used by the Service (Regional resource).
     
     # --- Storage (Global/Regional) ---
     s3_assets       = "${local.naming_prefix}-s3-assets"    
@@ -56,11 +56,11 @@ locals {
     connection      = "${local.naming_prefix}-conn"
     
     # --- Monitoring (Logs) ---
-    app_log_group   = "/aws/ecs/${local.naming_prefix}-cluster-app"
-    build_log_group = "/aws/codebuild/${local.naming_prefix}-pipeline-build"
+    cloudwatch_log_group = "/aws/ecs/${local.naming_prefix}-cluster-app-svc"
+    build_log_group      = "/aws/codebuild/${local.naming_prefix}-pipeline-build"
     
     # --- Grouping ---
-    resource_group  = "${local.naming_prefix}-group" 
+    resource_group  = "${local.naming_prefix}-resource-group" 
   }
 
   # ------------------------------------------------------------------
